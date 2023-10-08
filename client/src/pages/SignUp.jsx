@@ -39,8 +39,6 @@ export default function SignUp() {
       setError(error.message);
     }
   }
-  console.log(formData);
-  console.log(isLoading);
 
   return (
     <div className="mx-auto max-w-lg p-3">
