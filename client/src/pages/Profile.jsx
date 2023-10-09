@@ -1,16 +1,80 @@
+import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
+import {
+  getDownloadURL,
+  getStorage,
+  ref,
+  uploadBytesResumable,
+} from "firebase/storage";
+import { app } from "../firebase";
 
 export default function Profile() {
+  const fileRef = useRef(null);
   const { currentUser } = useSelector((state) => state.user);
+  const [file, setFile] = useState(undefined);
+  const [filePerc, setFilePerc] = useState(0);
+  const [fileUploadError, setFileUploadError] = useState(false);
+  const [formData, setFormData] = useState({});
+  console.log(formData);
+
+  useEffect(() => {
+    if (file) {
+      handleFileUpload(file);
+    }
+  }, [file]);
+
+  const handleFileUpload = (file) => {
+    const storage = getStorage(app);
+    const fileName = new Date().getTime() + file.name;
+    const storageRef = ref(storage, fileName);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    uploadTask.on(
+      "state_changed",
+      (snapshot) => {
+        const progress =
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        setFilePerc(Math.round(progress));
+      },
+      (error) => {
+        setFileUploadError(true);
+      },
+      () => {
+        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+          setFormData({ ...formData, avatar: downloadURL });
+        });
+      },
+    );
+  };
+
   return (
     <div className="mx-auto max-w-lg p-3">
       <h1 className="my-7 text-center text-3xl font-semibold">Profile</h1>
       <form className="flex flex-col gap-4">
+        <input
+          onChange={(e) => setFile(e.target.files[0])}
+          type="file"
+          ref={fileRef}
+          hidden
+          accept="image/*"
+        />
         <img
-          className="mt-2 h-24 w-24 self-center rounded-full object-cover"
-          src={currentUser.avatar}
+          onClick={() => fileRef.current.click()}
+          className="mt-2 h-24 w-24 self-center rounded-full object-cover hover:cursor-pointer"
+          src={formData.avatar || currentUser.avatar}
           alt="profile"
         />
+        <p className="self-center text-sm">
+          {fileUploadError ? (
+            <span className="text-red-700">Error image upload</span>
+          ) : filePerc > 0 && filePerc < 100 ? (
+            <span className="text-slate-700">Uploading {filePerc}%</span>
+          ) : filePerc === 100 ? (
+            <span className="text-green-700">Image upload completed</span>
+          ) : (
+            ""
+          )}
+        </p>
         <input
           id="username"
           type="text"
@@ -33,9 +97,9 @@ export default function Profile() {
           update
         </button>
       </form>
-      <div className="flex justify-between mt-5">
-        <span className="text-red-700 cursor-pointer">Delete account</span>
-        <span className="text-red-700 cursor-pointer"> sign out</span>
+      <div className="mt-5 flex justify-between">
+        <span className="cursor-pointer text-red-700">Delete account</span>
+        <span className="cursor-pointer text-red-700"> sign out</span>
       </div>
     </div>
   );
