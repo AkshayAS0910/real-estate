@@ -11,6 +11,9 @@ import {
   updateUserStart,
   updateUserSucces,
   updateUserFailure,
+  deleteUserFailure,
+  deleteUserStart,
+  deleteUserSucces,
 } from "../redux/user/userSlice";
 import { useDispatch } from "react-redux";
 
@@ -29,6 +32,7 @@ export default function Profile() {
     if (file) {
       handleFileUpload(file);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [file]);
 
   const handleFileUpload = (file) => {
@@ -45,6 +49,7 @@ export default function Profile() {
         setFilePerc(Math.round(progress));
       },
       (error) => {
+        console.log(error);
         setFileUploadError(true);
       },
       () => {
@@ -80,6 +85,22 @@ export default function Profile() {
       setUpdateSuccess(true);
     } catch (error) {
       dispatch(updateUserFailure(error.message));
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    try {
+      dispatch(deleteUserStart());
+      const res = await fetch(`/api/user/delete/${currentUser._id}`, {
+        method: "DELETE",
+      });
+      const data = res.json();
+      if (data.success === false) {
+        dispatch(deleteUserFailure(data.message));
+      }
+      dispatch(deleteUserSucces());
+    } catch (error) {
+      dispatch(deleteUserFailure(error.message));
     }
   };
 
@@ -142,7 +163,12 @@ export default function Profile() {
         </button>
       </form>
       <div className="mt-5 flex justify-between">
-        <span className="cursor-pointer text-red-700">Delete account</span>
+        <span
+          onClick={handleDeleteUser}
+          className="cursor-pointer text-red-700"
+        >
+          Delete account
+        </span>
         <span className="cursor-pointer text-red-700"> sign out</span>
       </div>
       <p className="mt-5 text-center text-red-700">{error ? error : ""}</p>
