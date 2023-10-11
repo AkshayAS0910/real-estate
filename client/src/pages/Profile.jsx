@@ -19,6 +19,7 @@ import {
   signOutUserSucces,
 } from "../redux/user/userSlice";
 import { useDispatch } from "react-redux";
+import { Link } from "react-router-dom";
 
 export default function Profile() {
   const fileRef = useRef(null);
@@ -116,7 +117,7 @@ export default function Profile() {
         dispatch(signOutUserFailure(data.message));
         return;
       }
-      dispatch(signOutUserSucces()); 
+      dispatch(signOutUserSucces());
     } catch (error) {
       dispatch(signOutUserFailure(error.message));
     }
@@ -179,6 +180,12 @@ export default function Profile() {
         >
           {isLoading ? "Loading..." : "update"}
         </button>
+        <Link
+          to="/create-listing"
+          className="rounded-lg bg-green-700 p-3 text-center uppercase text-white hover:opacity-95"
+        >
+          Create Listing
+        </Link>
       </form>
       <div className="mt-5 flex justify-between">
         <span
